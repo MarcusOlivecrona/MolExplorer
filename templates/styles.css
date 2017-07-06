@@ -1,0 +1,35 @@
+html {
+    display: table;
+    margin: auto;
+    background-color: #2F2F2F;
+}
+
+body {
+    display: table-cell;
+    vertical-align: middle;
+    color: #fff;
+}
+
+h1 {
+    margin: 1em 0 1em 0;
+    color: #ffffff;
+    font-family: 'Julius Sans One', sans-serif;
+    font-size: 2em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+a:link {
+    font-weight: bold;
+    text-decoration: none;
+    color: #0d8ba1;
+}
+a:visited {
+    font-weight: bold;
+    text-decoration: none;
+    color: #1a5952;
+}
+a:hover, a:focus, a:active {
+    text-decoration: underline;
+    color: #9685BA;
+}
