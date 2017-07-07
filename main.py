@@ -41,6 +41,7 @@ with open(path, "r") as f:
                     property.append(float(line[i + 1]))
         except IndexError:
             continue
+    print("Reading data completed...")
 
 hover = HoverTool(tooltips="""
     <div>
@@ -57,7 +58,7 @@ hover = HoverTool(tooltips="""
             <span style="font-size: 15px; color: #F17022;">@y_desc : @y</span>
         </div>
         <div>
-            <span style="font-size: 15px; color: #F17022;">@color_desc : @y</span>
+            <span style="font-size: 15px; color: #F17022;">@color_desc : @color_data</span>
         </div>
     </div>
     """)
