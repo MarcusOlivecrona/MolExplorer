@@ -1,6 +1,8 @@
 from bokeh.plotting import figure, ColumnDataSource, curdoc
-from bokeh.models import HoverTool, PanTool, BoxZoomTool, ResetTool
-from bokeh.layouts import row, column, widgetbox
+from bokeh.models import HoverTool, PanTool, BoxZoomTool, ResetTool, BoxSelectTool, LassoSelectTool
+from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter, StringEditor
+from high_table import HighTable
+from bokeh.layouts import row, column, widgetbox, layout
 from bokeh.models.widgets import Select
 import bokeh.palettes
 from rdkit import Chem
@@ -36,11 +38,14 @@ with open(path, "r") as f:
                     smiles.append("{:.67}...".format(line[0]))
                 else:
                     smiles.append(line[0])
-                imgs.append(Draw.MolsToGridImage((mol,), molsPerRow=1, subImgSize=(400,400), useSVG=True))
+                imgs.append(Draw.MolsToGridImage((mol,), molsPerRow=1, subImgSize=(300,300), useSVG=True))
                 for i, property in enumerate(properties.values()):
                     property.append(float(line[i + 1]))
         except IndexError:
             continue
+    table_data = {key : item for key, item in properties.items()}
+    table_data['SMILES'] = smiles
+    table_data['IMGS'] = imgs
     print("Reading data completed...")
 
 hover = HoverTool(tooltips="""
@@ -61,14 +66,21 @@ hover = HoverTool(tooltips="""
             <span style="font-size: 15px; color: #F17022;">@color_desc : @color_data</span>
         </div>
     </div>
-    """)
+    """, attachment="horizontal")
 
 source = ColumnDataSource(data=dict(x=[], y=[], color=[], color_data=[], x_desc=[], y_desc=[], color_desc=[], SMILES=[], IMGS=[]))
 x_axis = Select(title="X Axis", options=list(properties.keys()), value=list(properties.keys())[0])
 y_axis = Select(title="Y Axis", options=list(properties.keys()), value=list(properties.keys())[1])
 color_axis = Select(title="Color using", options=list(properties.keys()) + ["None"], value="None")
-p = figure(plot_width=1000, plot_height=800, tools=[hover, PanTool(), BoxZoomTool(), ResetTool()])
+p = figure(plot_width=1000, plot_height=800, tools=[hover, PanTool(), BoxZoomTool(), ResetTool(), BoxSelectTool(), LassoSelectTool()])
 p.circle("x", "y", size=20, line_color="color", fill_color="color", fill_alpha=0.5, source=source)
+
+formatter =  HTMLTemplateFormatter(template="<div><%= value %></div>")
+table_source = ColumnDataSource(data=table_data)
+columns = [TableColumn(field='IMGS', title='Structure', width=300, formatter=formatter),
+           TableColumn(field='SMILES', title='SMILES', width=300, editor=StringEditor())] + \
+          [TableColumn(field=prop, title=prop, width=150) for prop in properties.keys()]
+table = HighTable(source=table_source, columns=columns, editable=True, width=1200, height=1200)
 
 def colors_from_data(data):
     min_data = min(data)
@@ -100,14 +112,20 @@ def update():
 
     source.data = dict(x=x_data, y=y_data, color=color, color_data=color_data, x_desc=x_desc,
                        y_desc=y_desc, color_desc=color_desc, SMILES=smiles, IMGS=imgs)
+
+def update_table(attr, old, new):
+    idxs = new['1d']['indices']
+    data = {key : [item[i] for i in idxs] for key, item in table_data.items()}
+    table_source.data = data
     
 x_axis.on_change("value", lambda attr, old, new: update())
 y_axis.on_change("value", lambda attr, old, new: update())
 color_axis.on_change("value", lambda attr, old, new: update())
+source.on_change("selected", update_table)
 
 widgetbox = widgetbox([x_axis, y_axis, color_axis], width=200)
-row = row([p, widgetbox])
+layout = layout([[p, widgetbox], [table]])
 
 update()
-curdoc().add_root(row)
+curdoc().add_root(layout)
 
