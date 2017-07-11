@@ -20,6 +20,6 @@ c1cccc1 0.76 3.6 0.99
 Requirements:
 --------------
 * Python 3
-* Bokeh
+* Bokeh == 0.12.6 (the custom coffee script depends on a module structure that was changed in 0.12.6)jj
 * RDKit
 * Numpy
