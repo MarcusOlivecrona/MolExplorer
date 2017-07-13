@@ -1,6 +1,6 @@
 from bokeh.plotting import figure, ColumnDataSource, curdoc
-from bokeh.models import HoverTool, PanTool, BoxZoomTool, ResetTool, BoxSelectTool, LassoSelectTool
-from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter, StringEditor
+from bokeh.models import HoverTool, PanTool, BoxZoomTool, ResetTool, BoxSelectTool, LassoSelectTool, TapTool, CustomJS
+from bokeh.models.widgets import DataTable, TableColumn, HTMLTemplateFormatter, StringEditor, Button
 from high_table import HighTable
 from bokeh.layouts import row, column, widgetbox, layout
 from bokeh.models.widgets import Select
@@ -8,7 +8,7 @@ import bokeh.palettes
 from rdkit import Chem
 from rdkit.Chem import Draw
 import sys
-import os.path
+import os
 
 error_msg = """Need to provide valid SMILES file as first argument.
                      'bokeh serve . --args [smiles_file]'"""
@@ -22,11 +22,11 @@ if not os.path.isfile(path):
 with open(path, "r") as f:
     smiles = []
     imgs = []
-    
+
     # For the first header line
     headers = f.readline().split()
     properties = {header:list() for header in headers[1:]}
-    
+
     print("Property headers: {}".format([h for h in properties.keys()]))
 
     for line in f:
@@ -72,7 +72,7 @@ source = ColumnDataSource(data=dict(x=[], y=[], color=[], color_data=[], x_desc=
 x_axis = Select(title="X Axis", options=list(properties.keys()), value=list(properties.keys())[0])
 y_axis = Select(title="Y Axis", options=list(properties.keys()), value=list(properties.keys())[1])
 color_axis = Select(title="Color using", options=list(properties.keys()) + ["None"], value="None")
-p = figure(plot_width=1000, plot_height=800, tools=[hover, PanTool(), BoxZoomTool(), ResetTool(), BoxSelectTool(), LassoSelectTool()])
+p = figure(plot_width=1000, plot_height=800, tools=[hover, PanTool(), BoxZoomTool(), TapTool(), BoxSelectTool(), LassoSelectTool(), ResetTool()])
 p.circle("x", "y", size=20, line_color="color", fill_color="color", fill_alpha=0.5, source=source)
 
 formatter =  HTMLTemplateFormatter(template="<div><%= value %></div>")
@@ -81,6 +81,9 @@ columns = [TableColumn(field='IMGS', title='Structure', width=300, formatter=for
            TableColumn(field='SMILES', title='SMILES', width=300, editor=StringEditor())] + \
           [TableColumn(field=prop, title=prop, width=150) for prop in properties.keys()]
 table = HighTable(source=table_source, columns=columns, editable=True, width=1200, height=1200)
+
+button = Button(label="Download", button_type="warning")
+button.callback = CustomJS(args=dict(source=table_source), code=open(os.path.join(os.path.dirname(__file__), "download.js")).read())
 
 def colors_from_data(data):
     min_data = min(data)
@@ -117,15 +120,14 @@ def update_table(attr, old, new):
     idxs = new['1d']['indices']
     data = {key : [item[i] for i in idxs] for key, item in table_data.items()}
     table_source.data = data
-    
+
 x_axis.on_change("value", lambda attr, old, new: update())
 y_axis.on_change("value", lambda attr, old, new: update())
 color_axis.on_change("value", lambda attr, old, new: update())
 source.on_change("selected", update_table)
 
 widgetbox = widgetbox([x_axis, y_axis, color_axis], width=200)
-layout = layout([[p, widgetbox], [table]])
+layout = layout([[p, widgetbox], [table], [button]])
 
 update()
 curdoc().add_root(layout)
-
