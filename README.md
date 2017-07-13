@@ -1,7 +1,14 @@
-Visualization tool for molecules
-================================
+Visualization tool for molecular properties
+===========================================
 ![img](https://raw.githubusercontent.com/MarcusOlivecrona/MolExplorer/master/images/MolExplorer.png)
 ![img](https://raw.githubusercontent.com/MarcusOlivecrona/MolExplorer/master/images/MolExplorerHover.png)
+
+Features:
+--------
+* Choose data column for plot axes and colouring
+* Hover over a datapoint to display the structure
+* Select datapoints to filter down the data table
+* Download selected structures
 
 Usage:
 --------
