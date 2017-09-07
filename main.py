@@ -43,6 +43,17 @@ with open(path, "r") as f:
                     property.append(float(line[i + 1]))
         except IndexError:
             continue
+
+    if len(properties)==0:
+        import numpy as np
+        print("File did not have any property columns, adding dummy properties")
+        n = int(np.sqrt(len(smiles)))
+        properties[' '] = [i % n for i, _ in enumerate(smiles)]
+        properties['  '] = [i // n for i, _ in enumerate(smiles)]
+    elif len(properties)==1:
+        print("File only had one property column, adding a dummy property")
+        properties[' '] = [i for i, _ in enumerate(smiles)]
+
     table_data = {key : item for key, item in properties.items()}
     table_data['SMILES'] = smiles
     table_data['IMGS'] = imgs
@@ -68,11 +79,15 @@ hover = HoverTool(tooltips="""
     </div>
     """, attachment="horizontal")
 
-source = ColumnDataSource(data=dict(x=[], y=[], color=[], color_data=[], x_desc=[], y_desc=[], color_desc=[], SMILES=[], IMGS=[]))
+source = ColumnDataSource(data=dict(x=[], y=[], color=[], color_data=[], x_desc=[], y_desc=[],
+                                    color_desc=[], SMILES=[], IMGS=[]))
+
 x_axis = Select(title="X Axis", options=list(properties.keys()), value=list(properties.keys())[0])
 y_axis = Select(title="Y Axis", options=list(properties.keys()), value=list(properties.keys())[1])
 color_axis = Select(title="Color using", options=list(properties.keys()) + ["None"], value="None")
-p = figure(plot_width=1000, plot_height=800, tools=[hover, PanTool(), BoxZoomTool(), TapTool(), BoxSelectTool(), LassoSelectTool(), ResetTool()])
+
+p = figure(plot_width=1000, plot_height=800, tools=[hover, PanTool(), BoxZoomTool(), TapTool(),
+                                                    BoxSelectTool(), LassoSelectTool(), ResetTool()])
 p.circle("x", "y", size=20, line_color="color", fill_color="color", fill_alpha=0.5, source=source)
 
 formatter =  HTMLTemplateFormatter(template="<div><%= value %></div>")
@@ -83,7 +98,8 @@ columns = [TableColumn(field='IMGS', title='Structure', width=300, formatter=for
 table = HighTable(source=table_source, columns=columns, editable=True, width=1200, height=1200)
 
 button = Button(label="Download", button_type="warning")
-button.callback = CustomJS(args=dict(source=table_source), code=open(os.path.join(os.path.dirname(__file__), "download.js")).read())
+button.callback = CustomJS(args=dict(source=table_source),
+                           code=open(os.path.join(os.path.dirname(__file__), "download.js")).read())
 
 def colors_from_data(data):
     min_data = min(data)
