@@ -2,10 +2,10 @@ var data = source.data;
 var headers = ["SMILES"];
 for (header of Object.keys(data)) {
    if (header !== "IMGS" && header !=="SMILES") {headers.push(header)}
-} 
-    
+}
+
 var filetext = headers.join("\t");
-filetext.concat("\n");
+filetext = filetext.concat("\n");
 for (i=0; i < data[headers[0]].length; i++) {
     var currRow = [];
     for (header of headers) {
@@ -33,4 +33,3 @@ else {
     link.style.visibility = 'visible';
     link.dispatchEvent(new MouseEvent('click'))
 }
-  
